@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Dokumen Teknis: Pengembangan Aplikasi Buku Masak</title>
+    <style>
+        body {
+            font-family: 'Calibri', 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #2b2d42;
+            margin: 40px;
+        }
+        h1 {
+            color: #e76f51;
+            font-size: 26pt;
+            border-bottom: 2px solid #e76f51;
+            padding-bottom: 8px;
+            margin-top: 0;
+        }
+        h2 {
+            color: #2b2d42;
+            font-size: 18pt;
+            border-bottom: 1px solid #d5bdaf;
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #e76f51;
+            font-size: 14pt;
+            margin-top: 20px;
+        }
+        p, li {
+            font-size: 11pt;
+            text-align: justify;
+        }
+        ul {
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        th, td {
+            border: 1px solid #d5bdaf;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #fdfbf7;
+            color: #e76f51;
+            font-weight: bold;
+        }
+        tr:nth-child(even) td {
+            background-color: #faf5ef;
+        }
+        .note-box {
+            background-color: #faf5ef;
+            border-left: 4px solid #e76f51;
+            padding: 15px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        .note-title {
+            font-weight: bold;
+            color: #e76f51;
+            margin-bottom: 5px;
+        }
+        .code-snippet {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            display: block;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>DOKUMEN TEKNIS: PENGEMBANGAN APLIKASI BUKU MASAK (FLUTTER)</h1>
+    <p><strong>Dibuat Untuk:</strong> Dokumen Pendukung &amp; Materi UAS</p>
+    <p><strong>Deskripsi Singkat:</strong> Dokumen ini menjelaskan secara rinci tentang arsitektur, basis data lokal, logika penanganan gambar lintas platform, fitur pencarian multi-kriteria, serta manajemen pengguna lokal pada aplikasi Buku Masak berbasis Flutter.</p>
+
+    <h2>1. Arsitektur &amp; Teknologi Utama (Tech Stack)</h2>
+    <p>Aplikasi ini dibangun menggunakan arsitektur modular yang rapi untuk memisahkan antara bagian UI (Tampilan), State Management (Logika Bisnis), dan Data Layer (Penyimpanan).</p>
+    <ul>
+        <li><strong>Frontend Framework:</strong> Flutter SDK (Dart)</li>
+        <li><strong>State Management:</strong> Provider (ChangeNotifier &amp; Consumer)</li>
+        <li><strong>Database Lokal:</strong> Hive &amp; Hive Flutter (NoSQL Key-Value Store)</li>
+        <li><strong>Integrasi Jaringan:</strong> Package http (REST API Client untuk TheMealDB)</li>
+        <li><strong>Fitur Perangkat Keras:</strong> image_picker (Kamera &amp; Galeri)</li>
+    </ul>
+
+    <h2>2. Desain Database Lokal (Hive Box Schema)</h2>
+    <p>Hive menggunakan konsep "Box" untuk menyimpan objek data secara cepat tanpa perlu menulis query SQL secara manual. Berikut adalah struktur model data utama:</p>
+
+    <h3>A. Model User (user.dart)</h3>
+    <p>Menyimpan data pengguna lokal untuk otentikasi login dan registrasi.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Nama Field</th>
+                <th>Tipe Data</th>
+                <th>Fungsi / Kegunaan</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>name</td>
+                <td>String</td>
+                <td>Nama lengkap pengguna</td>
+            </tr>
+            <tr>
+                <td>email</td>
+                <td>String (Primary Key)</td>
+                <td>Email unik pengenal akun</td>
+            </tr>
+            <tr>
+                <td>password</td>
+                <td>String</td>
+                <td>Kata sandi pengguna (tersimpan lokal)</td>
+            </tr>
+            <tr>
+                <td>role</td>
+                <td>String</td>
+                <td>Peran pengguna (admin atau user biasa)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>B. Model Recipe (recipe.dart)</h3>
+    <p>Menyimpan data resep masakan bawaan, buatan pengguna, maupun favorit dari API.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Nama Field</th>
+                <th>Tipe Data</th>
+                <th>Fungsi / Kegunaan</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>id</td>
+                <td>String (Primary Key)</td>
+                <td>UUID unik resep lokal / ID resep API</td>
+            </tr>
+            <tr>
+                <td>name</td>
+                <td>String</td>
+                <td>Nama masakan</td>
+            </tr>
+            <tr>
+                <td>imageUrl</td>
+                <td>String</td>
+                <td>Tautan gambar dari internet (untuk resep API)</td>
+            </tr>
+            <tr>
+                <td>instructions</td>
+                <td>String</td>
+                <td>Langkah-langkah memasak</td>
+            </tr>
+            <tr>
+                <td>ingredients</td>
+                <td>List&lt;Ingredient&gt;</td>
+                <td>Daftar bahan makanan dan takarannya</td>
+            </tr>
+            <tr>
+                <td>isFavorite</td>
+                <td>bool</td>
+                <td>Penanda resep favorit pengguna</td>
+            </tr>
+            <tr>
+                <td>notes</td>
+                <td>String?</td>
+                <td>Catatan memasak tambahan</td>
+            </tr>
+            <tr>
+                <td>localImagePath</td>
+                <td>String?</td>
+                <td>Path file gambar fisik di penyimpanan HP</td>
+            </tr>
+            <tr>
+                <td>assetImagePath</td>
+                <td>String?</td>
+                <td>Path gambar aset bawaan di folder proyek (Asset/)</td>
+            </tr>
+            <tr>
+                <td>imageBase64</td>
+                <td>String?</td>
+                <td>String Base64 data gambar (khusus platform Web)</td>
+            </tr>
+            <tr>
+                <td>ownerEmail</td>
+                <td>String?</td>
+                <td>Email pemilik/pembuat resep</td>
+            </tr>
+            <tr>
+                <td>isPublic</td>
+                <td>bool</td>
+                <td>Menandakan resep dibagikan ke komunitas</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>3. Logika Teknis Utama &amp; Solusi Masalah</h2>
+
+    <h3>A. Solusi Gambar Lintas Platform (Smart Image Loader)</h3>
+    <p>Pada platform web, aplikasi tidak bisa membaca berkas fisik dari penyimpanan komputer secara langsung menggunakan path lokal (misalnya <code>C:/path/to/image.jpg</code>) karena dibatasi oleh keamanan browser. Untuk mengatasinya, dibuat sistem <strong>Smart Image Loader</strong>:</p>
+    <ul>
+        <li><strong>Mode Web:</strong> Gambar hasil foto kamera dikonversi menjadi data teks string berupa <strong>Base64</strong> dan disimpan langsung di Hive, atau menggunakan <strong>Blob URL</strong> sementara.</li>
+        <li><strong>Mode Mobile Android:</strong> Berkas gambar asli dipindahkan dari folder cache temporer ke folder dokumen permanen aplikasi (menggunakan <code>path_provider</code>) agar awet.</li>
+        <li>Widget <code>RecipeImage</code> akan mendeteksi tipe path secara dinamis untuk melakukan render yang sesuai (<code>Image.network</code>, <code>Image.asset</code>, <code>Image.file</code>, atau <code>Image.memory</code> untuk Base64).</li>
+    </ul>
+
+    <h3>B. Pencarian Multi-Kriteria (Lokal &amp; Online)</h3>
+    <p>Fitur pencarian dirancang fleksibel dengan memisahkan pencarian lokal dan online:</p>
+    <ul>
+        <li><strong>Pencarian Lokal:</strong> Pengguna dapat menyaring resep di HP secara instan sewaktu mengetik. Algoritma pencarian memeriksa apakah kata kunci ada pada <strong>Nama Resep</strong> atau salah satu dari daftar <strong>Bahan Masakan</strong>.</li>
+        <li><strong>Pencarian Online:</strong> Aplikasi memanggil API TheMealDB secara asinkron menggunakan format JSON untuk menampilkan resep internasional baru secara dinamis.</li>
+    </ul>
+
+    <h3>C. Isolasi Data Multi-User Lokal</h3>
+    <p>Aplikasi ini dapat digunakan oleh beberapa akun berbeda secara bergantian pada HP yang sama. Penyaringan resep dilakukan dengan membandingkan email pengguna yang sedang aktif dengan properti <code>ownerEmail</code> pada setiap resep di database lokal.</p>
+
+    <h2>4. Konfigurasi Sistem Android</h2>
+    <p>Agar aplikasi dapat berjalan lancar di HP Android fisik saat diuji oleh dosen, berkas <code>AndroidManifest.xml</code> telah ditambahkan izin sistem berikut:</p>
+    <ul>
+        <li><code>android.permission.INTERNET</code>: Memberikan akses internet ke API online.</li>
+        <li><code>android.permission.CAMERA</code>: Mengizinkan akses kamera untuk memotret makanan.</li>
+        <li><code>android.permission.READ_EXTERNAL_STORAGE</code> &amp; <code>WRITE_EXTERNAL_STORAGE</code>: Mengizinkan aplikasi menyimpan file foto resep ke dalam memori eksternal HP.</li>
+    </ul>
+
+    <h2>5. Kunci Jawaban Pertanyaan Dosen Penguji UAS</h2>
+
+    <div class="note-box">
+        <div class="note-title">Tanya: Mengapa kamu menggunakan database Hive bukan SQLite?</div>
+        <p><strong>Jawab:</strong> Hive adalah database NoSQL bertipe key-value yang ditulis murni menggunakan bahasa Dart. Hive jauh lebih cepat daripada SQLite dalam proses baca/tulis data, sangat ringan, dan tidak memerlukan baris query SQL yang panjang. Selain itu, Hive sangat cocok dengan Flutter karena mendukung penyimpanan objek model kustom secara langsung menggunakan TypeAdapter.</p>
+    </div>
+
+    <div class="note-box">
+        <div class="note-title">Tanya: Bagaimana cara kamu menangani error "Access Denied" atau crash saat merender gambar di Web vs HP Android?</div>
+        <p><strong>Jawab:</strong> Saya membuat logika kondisi platform (platform check). Jika dijalankan di Web, aplikasi mendeteksi data Base64 atau Blob URL dan menampilkannya menggunakan <code>Image.memory</code> atau <code>Image.network</code>. Jika di HP Android, aplikasi mendeteksi path file fisik di memori perangkat dan menampilkannya dengan <code>Image.file</code>. Semuanya dibungkus dalam satu widget kustom bernama <code>RecipeImage</code>.</p>
+    </div>
+
+    <div class="note-box">
+        <div class="note-title">Tanya: Dari mana data resep online didapatkan dan bagaimana menyimpannya ke database HP?</div>
+        <p><strong>Jawab:</strong> Resep online diambil dari web server publik TheMealDB API menggunakan protokol HTTPS. Ketika pengguna menekan tombol suka (❤️/Favorit) pada resep online, objek data resep tersebut langsung disalin, ditambahkan penanda kepemilikan email aktif pengguna, lalu disimpan secara permanen ke database lokal Hive Box sehingga resep tersebut bisa diakses secara offline.</p>
+    </div>
+
+</body>
+</html>
