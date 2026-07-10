@@ -158,6 +158,6 @@ Aplikasi ini menggunakan **TheMealDB API** (gratis & tanpa autentikasi) untuk fi
 
 | Nama | NIM |
 |---|---|
-| Umar Hamzah | *(isi NIM kamu di sini)* |
+| Umar Hamzah | 24110400023|
 
 **Mata Kuliah:** Mobile Computing — UAS
